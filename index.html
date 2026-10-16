@@ -47,31 +47,32 @@
     // La dirección actual la publica automáticamente el sistema del colegio en direccion.json
     const show = id => ['loading', 'ready', 'down'].forEach(s => { document.getElementById(s).hidden = s !== id; });
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('tiempo')), ms))]);
-    async function current() {
-      const t = Date.now();
-      try {
-        return await (await fetch('direccion.json?t=' + t, { cache: 'no-store' })).json();
-      } catch {
-        // Respaldo: leer el archivo directamente desde GitHub
-        const r = await fetch('https://api.github.com/repos/noirstudio-web/ie-luis-lopez-mesa/contents/direccion.json?t=' + t, { cache: 'no-store' });
-        const j = await r.json();
+    // Dos fuentes de la dirección: la copia publicada (rápida) y el archivo directo en GitHub
+    // (se actualiza al instante; sirve cuando el PC acaba de reiniciarse y la copia aún no se renueva)
+    const sources = [
+      async () => (await fetch('direccion.json?t=' + Date.now(), { cache: 'no-store' })).json(),
+      async () => {
+        const j = await (await fetch('https://api.github.com/repos/noirstudio-web/ie-luis-lopez-mesa/contents/direccion.json?t=' + Date.now(), { cache: 'no-store' })).json();
         return JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, '')))));
       }
-    }
+    ];
+    const reachable = url => withTimeout(fetch(url + '/api/public?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }), 10000).then(() => true, () => false);
     (async () => {
-      try {
-        const d = await current();
-        if (!d.url) throw new Error('sin dirección');
+      const tried = new Set();
+      for (const get of sources) {
+        let d;
+        try { d = await get(); } catch { continue; }
+        if (!d?.url || tried.has(d.url)) continue;
+        tried.add(d.url);
+        if (!(await reachable(d.url))) continue;
         const target = d.url + (location.hash || '');
         document.getElementById('go').href = target;
         if (d.updated) document.getElementById('info').textContent = 'Sistema encendido desde ' + new Date(d.updated).toLocaleString('es');
-        // Comprobar que el sistema responde antes de llevar a la persona
-        await withTimeout(fetch(d.url + '/api/public?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }), 12000);
         show('ready');
         location.replace(target);
-      } catch {
-        show('down');
+        return;
       }
+      show('down');
     })();
   </script>
 </body>
