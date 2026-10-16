@@ -1,5 +1,6 @@
-# Mantiene despierto el sistema escolar en Render (plan gratis): lo visita cada 5 minutos
-# para que no "se duerma" y nadie tenga que esperar a que arranque.
+# Mantiene despierto el sistema escolar en Render (plan gratis) y vigila que funcione.
+# - Lo visita cada 5 minutos para que no "se duerma".
+# - Si no responde o no puede guardar los datos, la tarea falla y GitHub envía un correo al dueño de la cuenta.
 name: Mantener despierto el sistema
 
 on:
@@ -13,22 +14,41 @@ permissions:
 jobs:
   despertar:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 8
     steps:
-      - name: Visitar el sistema
+      - name: Visitar y revisar el sistema
         run: |
-          curl -sS -m 120 -o /dev/null -w "Respuesta: %{http_code} en %{time_total} s\n" https://ie-luis-lopez-mesa.onrender.com/api/public || echo "No respondió (puede estar arrancando)"
+          URL="https://ie-luis-lopez-mesa.onrender.com/api/public"
+          for i in 1 2 3; do
+            BODY=$(curl -sS -m 120 -w '\n%{http_code}' "$URL" || true)
+            CODE=$(echo "$BODY" | tail -n1)
+            ESTADO=$(echo "$BODY" | head -n -1 | grep -o '"storage":"[a-z]*"' | cut -d'"' -f4)
+            echo "Intento $i: respuesta $CODE, guardado: ${ESTADO:-?}"
+            if [ "$CODE" = "200" ] && [ "$ESTADO" != "error" ]; then exit 0; fi
+            sleep 30
+          done
+          if [ "$CODE" = "200" ]; then
+            echo "::error::El sistema funciona pero NO puede guardar los datos en GitHub (revisa el token en Render)"
+          else
+            echo "::error::El sistema no responde (revisa Render)"
+          fi
+          exit 1
 
       # GitHub pausa las tareas programadas si el repositorio pasa 60 días sin cambios:
-      # una vez por semana (lunes) se actualiza un archivo para que siga activo.
-      - name: Revisar si toca la actividad semanal
-        id: semana
+      # si el último cambio tiene más de 6 días, se actualiza un archivo para que siga activo.
+      - name: Revisar actividad del repositorio
+        id: actividad
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "$(date -u +%u%H)" = "112" ] && [ "$(date -u +%M)" -lt 5 ]; then echo "toca=si" >> "$GITHUB_OUTPUT"; fi
+          ULTIMA=$(gh api "repos/${{ github.repository }}/commits?per_page=1" --jq '.[0].commit.committer.date')
+          DIAS=$(( ( $(date -u +%s) - $(date -u -d "$ULTIMA" +%s) ) / 86400 ))
+          echo "Último cambio hace $DIAS día(s)"
+          if [ "$DIAS" -ge 6 ]; then echo "toca=si" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@v4
-        if: steps.semana.outputs.toca == 'si'
+        if: steps.actividad.outputs.toca == 'si'
       - name: Actividad semanal
-        if: steps.semana.outputs.toca == 'si'
+        if: steps.actividad.outputs.toca == 'si'
         run: |
           date -u +"%Y-%m-%d %H:%M UTC" > ultima-revision.txt
           git config user.name "sistema-escolar"
