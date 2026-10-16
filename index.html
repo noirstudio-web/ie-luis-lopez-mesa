@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IE Luis López Mesa · Plataforma escolar</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root { --primary: #4f46e5; --text: #0f172a; --muted: #64748b; --bg: #f4f6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px;
+      font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--text);
+      background: linear-gradient(160deg, #eef2ff, var(--bg)); }
+    .card { width: 100%; max-width: 420px; background: #fff; border-radius: 20px; padding: 32px 26px; text-align: center;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .12); border: 1px solid #e2e8f0; }
+    .logo { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 18px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #6366f1, #a855f7); color: #fff; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    p { color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
+    .spinner { width: 34px; height: 34px; margin: 6px auto 18px; border: 3px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn { display: inline-flex; justify-content: center; width: 100%; padding: 13px 18px; border-radius: 12px; border: 0;
+      background: var(--primary); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+    .btn.ghost { background: #f1f5f9; color: var(--text); margin-top: 8px; }
+    .off { color: #b91c1c; font-weight: 700; }
+    small { display: block; color: var(--muted); margin-top: 16px; font-size: 12.5px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
+    <h1>IE Luis López Mesa</h1>
+    <section id="loading"><p>Abriendo la plataforma escolar…</p><div class="spinner"></div></section>
+    <section id="ready" hidden>
+      <p>Si no se abre sola, toca el botón.</p>
+      <a class="btn" id="go" href="#">Entrar a la plataforma</a>
+    </section>
+    <section id="down" hidden>
+      <p class="off">La plataforma está apagada en este momento.</p>
+      <p>El equipo del colegio donde funciona el sistema no está encendido. Intenta de nuevo más tarde.</p>
+      <button class="btn" onclick="location.reload()">Intentar de nuevo</button>
+    </section>
+    <small id="info"></small>
+  </main>
+  <script>
+    // La dirección actual la publica automáticamente el sistema del colegio en direccion.json
+    const show = id => ['loading', 'ready', 'down'].forEach(s => { document.getElementById(s).hidden = s !== id; });
+    const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('tiempo')), ms))]);
+    async function current() {
+      const t = Date.now();
+      try {
+        return await (await fetch('direccion.json?t=' + t, { cache: 'no-store' })).json();
+      } catch {
+        // Respaldo: leer el archivo directamente desde GitHub
+        const r = await fetch('https://api.github.com/repos/noirstudio-web/ie-luis-lopez-mesa/contents/direccion.json?t=' + t, { cache: 'no-store' });
+        const j = await r.json();
+        return JSON.parse(decodeURIComponent(escape(atob(j.content.replace(/\n/g, '')))));
+      }
+    }
+    (async () => {
+      try {
+        const d = await current();
+        if (!d.url) throw new Error('sin dirección');
+        const target = d.url + (location.hash || '');
+        document.getElementById('go').href = target;
+        if (d.updated) document.getElementById('info').textContent = 'Sistema encendido desde ' + new Date(d.updated).toLocaleString('es');
+        // Comprobar que el sistema responde antes de llevar a la persona
+        await withTimeout(fetch(d.url + '/api/public?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }), 12000);
+        show('ready');
+        location.replace(target);
+      } catch {
+        show('down');
+      }
+    })();
+  </script>
+</body>
+</html>
