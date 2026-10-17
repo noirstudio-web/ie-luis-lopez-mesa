@@ -3,54 +3,60 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IE Luis López Mesa · Plataforma escolar</title>
+  <title>Aulora · Gestión escolar</title>
   <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#1B1F3B">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap">
   <style>
-    :root { --primary: #4f46e5; --text: #0f172a; --muted: #64748b; --bg: #f4f6fb; }
+    /* Paleta Aulora: Tinta #1B1F3B · Amanecer #F4A62A · Papel #FFF7EA */
+    :root { --ink: #1B1F3B; --sun: #F4A62A; --paper: #FFF7EA; --muted: #9AA0C3; }
     * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px;
-      font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; color: var(--text);
-      background: linear-gradient(160deg, #eef2ff, var(--bg)); }
-    .card { width: 100%; max-width: 420px; background: #fff; border-radius: 20px; padding: 32px 26px; text-align: center;
-      box-shadow: 0 20px 50px rgba(15, 23, 42, .12); border: 1px solid #e2e8f0; }
-    .crest { display: block; width: 110px; height: 110px; margin: 0 auto 14px; object-fit: contain; }
-    h1 { font-size: 22px; margin: 0 0 6px; }
-    p { color: var(--muted); margin: 0 0 18px; line-height: 1.5; }
-    .spinner { width: 34px; height: 34px; margin: 6px auto 18px; border: 3px solid #e2e8f0; border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px; overflow: hidden;
+      font-family: "Outfit", "Segoe UI", system-ui, sans-serif; color: var(--paper); background: var(--ink); }
+    body::after { content: ""; position: fixed; left: 50%; bottom: -280px; width: 820px; height: 560px; transform: translateX(-50%); border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(244, 166, 42, .45), rgba(244, 166, 42, .1) 55%, transparent 75%); pointer-events: none; }
+    .card { position: relative; z-index: 1; width: 100%; max-width: 420px; text-align: center; }
+    .icon { display: block; width: 104px; height: 104px; margin: 0 auto 18px; border-radius: 24px; box-shadow: 0 16px 40px rgba(0, 0, 0, .35); }
+    .wordmark { font-weight: 800; font-size: 56px; letter-spacing: -.035em; line-height: 1; }
+    .wordmark span { color: var(--sun); }
+    .tagline { margin: 10px 0 30px; font-size: 12px; font-weight: 600; letter-spacing: .32em; text-transform: uppercase; color: var(--muted); }
+    p { color: #C9CCE0; margin: 0 0 18px; line-height: 1.5; }
+    .spinner { width: 34px; height: 34px; margin: 6px auto 18px; border: 3px solid rgba(255, 247, 234, .15); border-top-color: var(--sun); border-radius: 50%; animation: spin .8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .btn { display: inline-flex; justify-content: center; width: 100%; padding: 13px 18px; border-radius: 12px; border: 0;
-      background: var(--primary); color: #fff; font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
-    .btn.ghost { background: #f1f5f9; color: var(--text); margin-top: 8px; }
-    .off { color: #b91c1c; font-weight: 700; }
+    .btn { display: inline-flex; justify-content: center; width: 100%; padding: 14px 18px; border-radius: 12px; border: 0;
+      background: var(--sun); color: var(--ink); font: inherit; font-weight: 800; text-decoration: none; cursor: pointer; }
+    .off { color: #FCA5A5; font-weight: 600; }
     small { display: block; color: var(--muted); margin-top: 16px; font-size: 12.5px; }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
   <main class="card">
-    <img class="crest" src="favicon-192.png" alt="Escudo IE Luis López Mesa" width="110" height="110">
-    <h1>IE Luis López Mesa</h1>
-    <section id="loading"><p>Abriendo la plataforma escolar…</p><div class="spinner"></div></section>
+    <img class="icon" src="favicon-192.png" alt="Aulora" width="104" height="104">
+    <div class="wordmark">aul<span>o</span>ra</div>
+    <div class="tagline">Gestión escolar inteligente</div>
+    <section id="loading"><p>Abriendo la plataforma…</p><div class="spinner"></div></section>
     <section id="ready" hidden>
       <p>Si no se abre sola, toca el botón.</p>
-      <a class="btn" id="go" href="#">Entrar a la plataforma</a>
+      <a class="btn" id="go" href="#">Entrar a Aulora</a>
     </section>
     <section id="down" hidden>
-      <p class="off">La plataforma está apagada en este momento.</p>
-      <p>El equipo del colegio donde funciona el sistema no está encendido. Intenta de nuevo más tarde.</p>
+      <p class="off">No se pudo abrir la plataforma en este momento.</p>
+      <p>Revisa tu conexión a internet e intenta de nuevo.</p>
       <button class="btn" onclick="location.reload()">Intentar de nuevo</button>
     </section>
     <small id="info"></small>
   </main>
   <script>
-    // La dirección actual la publica automáticamente el sistema del colegio en direccion.json
+    // La dirección de la plataforma está en direccion.json
     const show = id => ['loading', 'ready', 'down'].forEach(s => { document.getElementById(s).hidden = s !== id; });
     const withTimeout = (p, ms) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error('tiempo')), ms))]);
-    // Dos fuentes de la dirección: la copia publicada (rápida) y el archivo directo en GitHub
-    // (se actualiza al instante; sirve cuando el PC acaba de reiniciarse y la copia aún no se renueva)
+    // Dos fuentes de la dirección: la copia publicada (rápida) y el archivo directo en GitHub (se actualiza al instante)
     const sources = [
       async () => (await fetch('direccion.json?t=' + Date.now(), { cache: 'no-store' })).json(),
       async () => {
@@ -59,6 +65,12 @@
       }
     ];
     const reachable = url => withTimeout(fetch(url + '/api/public?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' }), 10000).then(() => true, () => false);
+    const go = d => {
+      const target = d.url + (location.hash || '');
+      document.getElementById('go').href = target;
+      show('ready');
+      location.replace(target);
+    };
     (async () => {
       const tried = new Set();
       for (const get of sources) {
@@ -66,13 +78,9 @@
         try { d = await get(); } catch { continue; }
         if (!d?.url || tried.has(d.url)) continue;
         tried.add(d.url);
-        if (!(await reachable(d.url))) continue;
-        const target = d.url + (location.hash || '');
-        document.getElementById('go').href = target;
-        if (d.updated) document.getElementById('info').textContent = 'Sistema encendido desde ' + new Date(d.updated).toLocaleString('es');
-        show('ready');
-        location.replace(target);
-        return;
+        // En la nube la dirección es fija: se entra directo (si estaba dormida, se despierta sola)
+        if (d.nube) return go(d);
+        if (await reachable(d.url)) return go(d);
       }
       show('down');
     })();
